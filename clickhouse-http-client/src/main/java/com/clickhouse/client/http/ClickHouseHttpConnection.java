@@ -9,12 +9,14 @@ import java.net.Proxy;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+
+import org.ietf.jgss.GSSException;
+
 import java.util.Map.Entry;
 
 import com.clickhouse.client.ClickHouseClient;
@@ -25,6 +27,7 @@ import com.clickhouse.client.ClickHouseRequest;
 import com.clickhouse.client.ClickHouseRequestManager;
 import com.clickhouse.client.config.ClickHouseClientOption;
 import com.clickhouse.client.config.ClickHouseProxyType;
+import com.clickhouse.client.gss.GssAuthorizator;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.config.ClickHouseOption;
 import com.clickhouse.data.ClickHouseByteUtils;
@@ -46,6 +49,8 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
             .getBytes(StandardCharsets.US_ASCII);
     private static final byte[] HEADER_BINARY_ENCODING = "content-transfer-encoding: binary\r\n\r\n"
             .getBytes(StandardCharsets.US_ASCII);
+
+    private static final String HEADER_AUTHORIZATION = "authorization";
 
     private static final byte[] ERROR_MSG_PREFIX = "ode: ".getBytes(StandardCharsets.US_ASCII);
 
@@ -201,7 +206,7 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
             if (value == null) {
                 continue;
             }
-            if ("authorization".equals(name)) {
+            if (HEADER_AUTHORIZATION.equals(name)) {
                 hasAuthorizationHeader = true;
             }
             map.put(name, value);
@@ -213,10 +218,12 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
         }
         map.put("user-agent", !ClickHouseChecker.isNullOrEmpty(userAgent) ? userAgent : config.getClientName());
 
-        ClickHouseCredentials credentials = server.getCredentials(config);
-        if (credentials.useAccessToken()) {
+        ClickHouseCredentials credentials = getCredentials(config, server);
+        if (credentials.isGssEnabled()) {
+            setGssAuthHeader(map, config, server);
+        } else if (credentials.useAccessToken()) {
             // TODO check if auth-scheme is available and supported
-            map.put("authorization", credentials.getAccessToken());
+            map.put(HEADER_AUTHORIZATION, credentials.getAccessToken());
         } else if (!hasAuthorizationHeader) {
             map.put("x-clickhouse-user", credentials.getUserName());
             if (config.isSsl() && !ClickHouseChecker.isNullOrEmpty(config.getSslCert())) {
@@ -240,6 +247,10 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
             map.put("content-encoding", config.getRequestCompressAlgorithm().encoding());
         }
         return map;
+    }
+
+    private static ClickHouseCredentials getCredentials(ClickHouseConfig config, ClickHouseNode server) {
+        return server.getCredentials(config);
     }
 
     protected static Proxy getProxy(ClickHouseConfig config) {
@@ -351,7 +362,6 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
     protected final ClickHouseRequestManager rm;
 
     protected final ClickHouseConfig config;
-    protected final Map<String, String> defaultHeaders;
     protected final String url;
 
     protected ClickHouseHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request) {
@@ -364,9 +374,12 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
 
         ClickHouseConfig c = request.getConfig();
         this.config = c;
-        this.defaultHeaders = Collections.unmodifiableMap(createDefaultHeaders(c, server, getUserAgent()));
         this.url = buildUrl(server.getBaseUri(), request);
         log.debug("url [%s]", this.url);
+    }
+
+    protected Map<String, String> getDefaultHeaders() {
+        return createDefaultHeaders(config, server, getUserAgent());
     }
 
     protected void closeQuietly() {
@@ -417,13 +430,13 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
      */
     protected Map<String, String> mergeHeaders(Map<String, String> requestHeaders) {
         if (requestHeaders == null || requestHeaders.isEmpty()) {
-            return defaultHeaders;
+            return getDefaultHeaders();
         } else if (isReusable()) {
-            return requestHeaders;
+            return setGssAuthHeader(requestHeaders, config, server);
         }
 
         Map<String, String> merged = new LinkedHashMap<>();
-        merged.putAll(defaultHeaders);
+        merged.putAll(getDefaultHeaders());
         for (Entry<String, String> header : requestHeaders.entrySet()) {
             String name = header.getKey().toLowerCase(Locale.ROOT);
             String value = header.getValue();
@@ -434,6 +447,24 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
             }
         }
         return merged;
+    }
+
+    private static Map<String, String> setGssAuthHeader(Map<String, String> headers, ClickHouseConfig config, ClickHouseNode server) {
+        if (headers.containsKey(HEADER_AUTHORIZATION)) {
+            log.debug("Authorization header is present. Skipping");
+            return headers;
+        }
+        ClickHouseCredentials credentials = getCredentials(config, server);
+        if (credentials.isGssEnabled()) {
+            try {
+                String userName = credentials.getUserName();
+                GssAuthorizator gssAuthorizator = new GssAuthorizator(userName, config.getKerberosServerName(), server.getHost());
+                headers.put(HEADER_AUTHORIZATION, "Negotiate " + gssAuthorizator.getAuthToken());
+            } catch (GSSException e) {
+                throw new RuntimeException("Can not generate GSS token", e);
+            }
+        }
+        return headers;
     }
 
     /**
