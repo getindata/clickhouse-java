@@ -15,7 +15,7 @@ public final class ClickHouseHttpConnectionFactory {
     private static final Logger log = LoggerFactory.getLogger(ClickHouseHttpConnectionFactory.class);
 
     public static ClickHouseHttpConnection createConnection(ClickHouseNode server, ClickHouseRequest<?> request,
-            ExecutorService executor, GssAuthorization gssAuthorization) throws IOException {
+            ExecutorService executor, GssAuthorizationContext gssAuthorization) throws IOException {
         HttpConnectionProvider provider = request.getConfig().getOption(ClickHouseHttpOption.CONNECTION_PROVIDER,
                 HttpConnectionProvider.class);
         if (provider == HttpConnectionProvider.APACHE_HTTP_CLIENT) {
