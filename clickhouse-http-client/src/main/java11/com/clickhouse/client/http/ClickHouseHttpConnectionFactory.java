@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.clickhouse.client.ClickHouseNode;
 import com.clickhouse.client.ClickHouseRequest;
-import com.clickhouse.client.gss.GssAuthorization;
+import com.clickhouse.client.gss.GssAuthorizationContext;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.client.http.config.HttpConnectionProvider;
 import com.clickhouse.logging.Logger;
