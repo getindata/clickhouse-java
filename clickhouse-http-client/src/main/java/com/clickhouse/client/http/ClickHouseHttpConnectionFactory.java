@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.clickhouse.client.ClickHouseNode;
 import com.clickhouse.client.ClickHouseRequest;
-import com.clickhouse.client.gss.GssAuthorization;
+import com.clickhouse.client.gss.GssAuthorizationContext;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.client.http.config.HttpConnectionProvider;
 import com.clickhouse.logging.Logger;
@@ -15,7 +15,7 @@ public final class ClickHouseHttpConnectionFactory {
     private static final Logger log = LoggerFactory.getLogger(ClickHouseHttpConnectionFactory.class);
 
     public static ClickHouseHttpConnection createConnection(ClickHouseNode server, ClickHouseRequest<?> request,
-            ExecutorService executor, GssAuthorization gssAuthorization) throws IOException {
+            ExecutorService executor, GssAuthorizationContext gssAuthorization) throws IOException {
         HttpConnectionProvider provider = request.getConfig().getOption(ClickHouseHttpOption.CONNECTION_PROVIDER,
                 HttpConnectionProvider.class);
         if (provider == HttpConnectionProvider.APACHE_HTTP_CLIENT) {

@@ -19,7 +19,7 @@ import com.clickhouse.client.ClickHouseNode;
 import com.clickhouse.client.ClickHouseProtocol;
 import com.clickhouse.client.ClickHouseRequest;
 import com.clickhouse.client.config.ClickHouseClientOption;
-import com.clickhouse.client.gss.GssAuthorization;
+import com.clickhouse.client.gss.GssAuthorizationContext;
 import com.clickhouse.data.ClickHouseExternalTable;
 import com.clickhouse.data.ClickHouseFormat;
 import com.clickhouse.data.ClickHouseInputStream;
@@ -28,7 +28,7 @@ import com.clickhouse.data.ClickHouseOutputStream;
 public class ClickHouseHttpConnectionTest {
     static class SimpleHttpConnection extends ClickHouseHttpConnection {
 
-        protected SimpleHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorization gssAuthorization) {
+        protected SimpleHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthorization) {
             super(server, request, gssAuthorization);
         }
 
@@ -83,7 +83,7 @@ public class ClickHouseHttpConnectionTest {
                 .build();
 
         ClickHouseRequest<?> request = ClickHouseClient.newInstance().read(server);
-        GssAuthorization gssAuthMode = mock(GssAuthorization.class);
+        GssAuthorizationContext gssAuthMode = mock(GssAuthorizationContext.class);
         when(gssAuthMode.getAuthToken("userA", "kerbServerName", server.getHost())).thenReturn("AUTH_TOKEN_ABC");
         SimpleHttpConnection sc = new SimpleHttpConnection(server, request, gssAuthMode);
         Assert.assertFalse(sc.defaultHeaders.containsKey("authorization"));
@@ -101,7 +101,7 @@ public class ClickHouseHttpConnectionTest {
                 .build();
 
         ClickHouseRequest<?> request = ClickHouseClient.newInstance().read(server);
-        GssAuthorization gssAuthMode = mock(GssAuthorization.class);
+        GssAuthorizationContext gssAuthMode = mock(GssAuthorizationContext.class);
         when(gssAuthMode.getAuthToken("userB", "kerbServerNameB", server.getHost())).thenReturn("AUTH_TOKEN_ABCD");
         SimpleHttpConnection sc = new SimpleHttpConnection(server, request, gssAuthMode);
         Assert.assertFalse(sc.defaultHeaders.containsKey("authorization"));

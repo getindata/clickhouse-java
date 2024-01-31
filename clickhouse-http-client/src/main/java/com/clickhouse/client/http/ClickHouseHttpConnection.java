@@ -29,7 +29,7 @@ import com.clickhouse.client.ClickHouseRequest;
 import com.clickhouse.client.ClickHouseRequestManager;
 import com.clickhouse.client.config.ClickHouseClientOption;
 import com.clickhouse.client.config.ClickHouseProxyType;
-import com.clickhouse.client.gss.GssAuthorization;
+import com.clickhouse.client.gss.GssAuthorizationContext;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.config.ClickHouseOption;
 import com.clickhouse.data.ClickHouseByteUtils;
@@ -365,9 +365,9 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
     protected final ClickHouseConfig config;
     protected final String url;
     protected final Map<String, String> defaultHeaders;
-    protected final GssAuthorization gssAuthorization;
+    protected final GssAuthorizationContext gssAuthorization;
 
-    protected ClickHouseHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorization gssAuthorization) {
+    protected ClickHouseHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthorization) {
         if (server == null || request == null) {
             throw new IllegalArgumentException("Non-null server and request are required");
         }
@@ -383,7 +383,7 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
         this.gssAuthorization = gssAuthorization;
     }
 
-    protected GssAuthorization getGssAuthorization() {
+    protected GssAuthorizationContext getGssAuthorization() {
         return gssAuthorization;
     }
 
@@ -459,7 +459,6 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
             ClickHouseNode server) {
         if (headers.containsKey(HEADER_AUTHORIZATION)) {
             log.warn("Authorization header is present. Skipping");
-            System.out.println("Authorization header is present. Skipping");
             return headers;
         }
         ClickHouseCredentials credentials = getCredentials(config, server);

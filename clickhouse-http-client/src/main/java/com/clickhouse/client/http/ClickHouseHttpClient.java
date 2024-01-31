@@ -17,7 +17,7 @@ import com.clickhouse.client.ClickHouseProtocol;
 import com.clickhouse.client.ClickHouseRequest;
 import com.clickhouse.client.ClickHouseResponse;
 import com.clickhouse.client.ClickHouseTransaction;
-import com.clickhouse.client.gss.GssAuthorization;
+import com.clickhouse.client.gss.GssAuthorizationContext;
 import com.clickhouse.client.ClickHouseStreamResponse;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.config.ClickHouseOption;
@@ -53,9 +53,11 @@ public class ClickHouseHttpClient extends AbstractClient<ClickHouseHttpConnectio
             closeConnection(connection, false);
         }
 
-        GssAuthorization gssAuthorization = null;
+        GssAuthorizationContext gssAuthorization = null;
         if (connection != null) {
             gssAuthorization = connection.getGssAuthorization();
+        } else {
+            gssAuthorization = GssAuthorizationContext.initialize();
         }
         try {
             return ClickHouseHttpConnectionFactory.createConnection(server, request, getExecutor(), gssAuthorization);

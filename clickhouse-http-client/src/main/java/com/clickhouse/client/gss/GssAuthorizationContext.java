@@ -17,14 +17,18 @@ import com.clickhouse.client.config.ClickHouseDefaults;
 import com.clickhouse.logging.Logger;
 import com.clickhouse.logging.LoggerFactory;
 
-public class GssAuthorization implements Serializable {
+public class GssAuthorizationContext implements Serializable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GssAuthorization.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GssAuthorizationContext.class);
 
     private final Subject subject;
 
-    public GssAuthorization() {
-        this.subject = SubjectProvider.getSubject();
+    private GssAuthorizationContext(Subject subject) {
+        this.subject = subject;
+    }
+
+    public static GssAuthorizationContext initialize() {
+        return new GssAuthorizationContext(SubjectProvider.getSubject());
     }
 
     public String getAuthToken(String user, String serverName, String host) throws GSSException {
