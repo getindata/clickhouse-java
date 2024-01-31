@@ -53,14 +53,14 @@ public class ClickHouseHttpClient extends AbstractClient<ClickHouseHttpConnectio
             closeConnection(connection, false);
         }
 
-        GssAuthorizationContext gssAuthorization = null;
+        GssAuthorizationContext gssAuthContext = null;
         if (connection != null) {
-            gssAuthorization = connection.getGssAuthorization();
+            gssAuthContext = connection.getGssAuthorizationContext();
         } else {
-            gssAuthorization = GssAuthorizationContext.initialize();
+            gssAuthContext = GssAuthorizationContext.initialize();
         }
         try {
-            return ClickHouseHttpConnectionFactory.createConnection(server, request, getExecutor(), gssAuthorization);
+            return ClickHouseHttpConnectionFactory.createConnection(server, request, getExecutor(), gssAuthContext);
         } catch (IOException e) {
             throw new CompletionException(e);
         }

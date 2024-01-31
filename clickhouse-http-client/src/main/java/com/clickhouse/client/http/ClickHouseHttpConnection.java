@@ -365,9 +365,9 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
     protected final ClickHouseConfig config;
     protected final String url;
     protected final Map<String, String> defaultHeaders;
-    protected final GssAuthorizationContext gssAuthorization;
+    protected final GssAuthorizationContext gssAuthContext;
 
-    protected ClickHouseHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthorization) {
+    protected ClickHouseHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthContext) {
         if (server == null || request == null) {
             throw new IllegalArgumentException("Non-null server and request are required");
         }
@@ -380,11 +380,11 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
         this.url = buildUrl(server.getBaseUri(), request);
         this.defaultHeaders = Collections.unmodifiableMap(createDefaultHeaders(c, server, getUserAgent()));
         log.debug("url [%s]", this.url);
-        this.gssAuthorization = gssAuthorization;
+        this.gssAuthContext = gssAuthContext;
     }
 
-    protected GssAuthorizationContext getGssAuthorization() {
-        return gssAuthorization;
+    protected GssAuthorizationContext getGssAuthorizationContext() {
+        return gssAuthContext;
     }
 
     protected void closeQuietly() {
@@ -463,13 +463,13 @@ public abstract class ClickHouseHttpConnection implements AutoCloseable {
         }
         ClickHouseCredentials credentials = getCredentials(config, server);
         if (credentials.isGssEnabled()) {
-            if (gssAuthorization == null) {
+            if (gssAuthContext == null) {
                 throw new IllegalStateException("GssAuthorizer not initialized");
             }
             String userName = credentials.getUserName();
             try {
                 headers.put(HEADER_AUTHORIZATION, "Negotiate "
-                        + gssAuthorization.getAuthToken(userName, config.getKerberosServerName(), server.getHost()));
+                        + gssAuthContext.getAuthToken(userName, config.getKerberosServerName(), server.getHost()));
             } catch (GSSException e) {
                 throw new RuntimeException("Can not generate GSS token for user " + userName + " host "
                         + server.getHost() + " with name " + config.getKerberosServerName(), e);

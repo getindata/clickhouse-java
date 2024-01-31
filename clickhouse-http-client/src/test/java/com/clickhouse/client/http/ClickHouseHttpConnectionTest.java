@@ -28,8 +28,8 @@ import com.clickhouse.data.ClickHouseOutputStream;
 public class ClickHouseHttpConnectionTest {
     static class SimpleHttpConnection extends ClickHouseHttpConnection {
 
-        protected SimpleHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthorization) {
-            super(server, request, gssAuthorization);
+        protected SimpleHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request, GssAuthorizationContext gssAuthContext) {
+            super(server, request, gssAuthContext);
         }
 
         protected SimpleHttpConnection(ClickHouseNode server, ClickHouseRequest<?> request) {

@@ -73,9 +73,9 @@ public class ApacheHttpConnectionImpl extends ClickHouseHttpConnection {
 
     private final CloseableHttpClient client;
 
-    protected ApacheHttpConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor, GssAuthorizationContext gssAuthorization)
+    protected ApacheHttpConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor, GssAuthorizationContext gssAuthContext)
             throws IOException {
-        super(server, request, gssAuthorization);
+        super(server, request, gssAuthContext);
 
         client = newConnection(config);
     }

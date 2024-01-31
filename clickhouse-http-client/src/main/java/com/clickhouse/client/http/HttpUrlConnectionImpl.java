@@ -194,9 +194,9 @@ public class HttpUrlConnectionImpl extends ClickHouseHttpConnection {
         }
     }
 
-    protected HttpUrlConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor, GssAuthorizationContext gssAuthorization)
+    protected HttpUrlConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor, GssAuthorizationContext gssAuthContext)
             throws IOException {
-        super(server, request, gssAuthorization);
+        super(server, request, gssAuthContext);
 
         conn = newConnection(url, true);
     }
