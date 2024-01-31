@@ -1,5 +1,6 @@
 package com.clickhouse.client.gss;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -16,26 +17,21 @@ import com.clickhouse.client.config.ClickHouseDefaults;
 import com.clickhouse.logging.Logger;
 import com.clickhouse.logging.LoggerFactory;
 
-public class GssAuthorizator {
+public class GssAuthorization implements Serializable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GssAuthorizator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GssAuthorization.class);
 
-    private final String user;
-    private final String serverName;
-    private final String host;
+    private final Subject subject;
 
-    public GssAuthorizator(String user, String serverName, String host) throws GSSException {
-        this.user = user;
-        this.serverName = serverName;
-        this.host = host;
+    public GssAuthorization() {
+        this.subject = SubjectProvider.getSubject();
     }
 
-    public String getAuthToken() throws GSSException {
+    public String getAuthToken(String user, String serverName, String host) throws GSSException {
         GSSCredential gssCredential = null;
-        Subject sub = SubjectProvider.getSubject();
-        if (sub != null) {
+        if (subject != null) {
             LOG.debug("Getting private credentials from subject");
-            Set<GSSCredential> gssCreds = sub.getPrivateCredentials(GSSCredential.class);
+            Set<GSSCredential> gssCreds = subject.getPrivateCredentials(GSSCredential.class);
             if (gssCreds != null && !gssCreds.isEmpty()) {
                 gssCredential = gssCreds.iterator().next();
             }

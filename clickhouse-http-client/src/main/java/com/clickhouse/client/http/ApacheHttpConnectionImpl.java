@@ -10,6 +10,7 @@ import com.clickhouse.client.ClickHouseSslContextProvider;
 import com.clickhouse.client.config.ClickHouseClientOption;
 import com.clickhouse.client.config.ClickHouseProxyType;
 import com.clickhouse.client.config.ClickHouseSslMode;
+import com.clickhouse.client.gss.GssAuthorization;
 import com.clickhouse.client.http.config.ClickHouseHttpOption;
 import com.clickhouse.data.ClickHouseChecker;
 import com.clickhouse.data.ClickHouseExternalTable;
@@ -72,9 +73,9 @@ public class ApacheHttpConnectionImpl extends ClickHouseHttpConnection {
 
     private final CloseableHttpClient client;
 
-    protected ApacheHttpConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor)
+    protected ApacheHttpConnectionImpl(ClickHouseNode server, ClickHouseRequest<?> request, ExecutorService executor, GssAuthorization gssAuthorization)
             throws IOException {
-        super(server, request);
+        super(server, request, gssAuthorization);
 
         client = newConnection(config);
     }
